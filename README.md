@@ -1,4 +1,9 @@
 # Chromance
+
+I have modified the original project by Zack Freeman to be an esphome external component, and to use WS2912B LED strip. I have stripped a lot of the emotibit code as I don't have one.
+
+## Original Readme
+
 Big, bold rainbow-glowing wall art that features the king of shapes - the hexagon. 
 This project was designed to work with an EmotiBit wristband to display biometric data, but it doesn't need one!
 A gorgeous animated ripple effect will automatically kick in after just a few seconds.
