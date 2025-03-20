@@ -100,53 +100,53 @@ int segmentConnections[40][2] = {
 // First member: Strip number
 // Second: LED index closer to ceiling
 // Third: LED index closer to floor
-int ledAssignments[40][3] = {
-    {2, headof(3), tailof(3)},
-    {2, tailof(2), headof(2)},
-    {1, headof(10), tailof(10)},
-    {1, tailof(9), headof(9)},
-    {1, headof(4), tailof(4)},
-    {1, tailof(3), headof(3)},
+int ledAssignments[40][3] = { //NOTE: changed 2->0 and 3->1
+    {0, headof(14), tailof(14)}, //2
+    {0, tailof(13), headof(13)}, //2
+    {1, headof(21), tailof(21)}, //1
+    {1, tailof(20), headof(20)}, //1
+    {1, headof(15), tailof(15)}, //1
+    {1, tailof(14), headof(14)}, //1
 
-    {2, tailof(6), headof(6)},
-    {3, tailof(11), headof(11)},
-    {1, headof(11), tailof(11)},
-    {1, tailof(8), headof(8)},
-    {1, headof(12), tailof(12)},
+    {0, tailof(17), headof(17)}, //2
+    {1, tailof(11), headof(11)},
+    {1, headof(22), tailof(22)}, //1
+    {1, tailof(19), headof(19)}, //1
+    {1, headof(23), tailof(23)}, //1
     {0, tailof(11), headof(11)},
 
-    {2, headof(4), tailof(4)},
-    {3, tailof(10), headof(10)},
-    {2, tailof(1), headof(1)},
-    {1, tailof(7), headof(7)},
-    {1, headof(5), tailof(5)},
+    {0, headof(15), tailof(15)}, //2
+    {1, tailof(10), headof(10)},
+    {0, tailof(12), headof(12)}, //2
+    {1, tailof(18), headof(18)}, //1
+    {1, headof(16), tailof(16)}, //1
     {0, tailof(10), headof(10)},
-    {1, tailof(2), headof(2)},
+    {1, tailof(13), headof(13)}, //1
 
-    {2, headof(5), tailof(5)},
-    {3, tailof(4), headof(4)},
-    {3, headof(5), tailof(5)},
+    {0, headof(16), tailof(16)}, //2
+    {1, tailof(4), headof(4)},
+    {1, headof(5), tailof(5)},
     {0, headof(5), tailof(5)},
     {0, tailof(4), headof(4)},
-    {1, tailof(1), headof(1)},
+    {1, tailof(12), headof(12)}, //1
 
-    {3, tailof(9), headof(9)},
+    {1, tailof(9), headof(9)},
     {0, headof(6), tailof(6)},
-    {1, tailof(6), headof(6)},
+    {1, tailof(17), headof(17)}, //1
     {0, tailof(9), headof(9)},
 
-    {3, tailof(3), headof(3)},
-    {3, tailof(8), headof(8)},
-    {3, headof(6), tailof(6)},
+    {1, tailof(3), headof(3)},
+    {1, tailof(8), headof(8)},
+    {1, headof(6), tailof(6)},
     {0, tailof(8), headof(8)},
     {0, tailof(3), headof(3)},
 
-    {3, tailof(2), headof(2)},
-    {3, headof(7), tailof(7)},
+    {1, tailof(2), headof(2)},
+    {1, headof(7), tailof(7)},
     {0, headof(7), tailof(7)},
     {0, tailof(2), headof(2)},
 
-    {3, tailof(1), headof(1)},
+    {1, tailof(1), headof(1)},
     {0, tailof(1), headof(1)}};
 
 // Border nodes are on the very edge of the network.

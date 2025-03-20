@@ -2,6 +2,8 @@
 
 I have modified the original project by Zack Freeman to be an esphome external component, and to use WS2912B LED strip. I have stripped a lot of the emotibit code as I don't have one.
 
+I also separated the strips in to 2 instead of 4.
+
 ## Original Readme
 
 Big, bold rainbow-glowing wall art that features the king of shapes - the hexagon. 

@@ -34,11 +34,6 @@
 #define SIMULATED_EDA_BASE_TIME 1000	   // Same, but for inward EDA pulses
 #define SIMULATED_EDA_VARIANCE 10000
 
-#ifdef CUBE_LOGGING
-#define CUBE_LOG(msg) ESP_LOGD(msg)
-#else 
-#define CUBE_LOG(msg)
-#endif
 
 namespace esphome {
 namespace cube_light {
@@ -51,6 +46,8 @@ class CubeLightOutput : public light::LightOutput, public Component {
 		void write_state(light::LightState *state) override;
 		void dump_config() override;
 		void loop() override;
+		uint32_t CRGBToInt(CRGB crgb);
+
 		CRGB* leds[NUM_STRIPS];
 		bool state{false};
 		byte ledColors[40][14][3]; // LED buffer - each ripple writes to this, then we write this to the strips

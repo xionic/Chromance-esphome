@@ -10,10 +10,14 @@
 #include "ripple.h"
 #include "mapping.h"
 #include <cstdint>
+#include "esphome/core/log.h"
 #include <Arduino.h>
 
-using namespace std;
+#define DEBUG_ADVANCEMENT
+#define DEBUG_RENDERING
 
+using namespace std;
+static const char *const TAG = "CubeLightOutput.light";
 
 float fmap(float x, float in_min, float in_max, float out_min, float out_max)
 {
@@ -33,6 +37,7 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
     // Place the Ripple in a node
     void Ripple::start(uint8_t n, uint8_t d, unsigned long c, float s, unsigned long l, uint8_t b)
     {
+        ESP_LOGD(TAG, "Ripple start node/seg: %i dir/pos: %i color: %X", n, d, c);
         color = c;
         speed = s;
         lifespan = l;
@@ -57,6 +62,7 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
 
     void Ripple::advance(uint8_t ledColors[40][14][3])
     {
+        ESP_LOGD(TAG, "Advance");
         unsigned long age = millis() - birthday;
 
         if (state == dead)
@@ -74,9 +80,7 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
         while (pressure >= 1)
         {
 #ifdef DEBUG_ADVANCEMENT
-            Serial.print("Ripple ");
-            Serial.print(rippleId);
-            Serial.println(" advancing:");
+             ESP_LOGD(TAG, "Ripple advancing: %i", rippleId);
 #endif
 
             switch (state)
@@ -90,10 +94,11 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
                 else
                 {
 #ifdef DEBUG_ADVANCEMENT
-                    Serial.print("  Picking direction out of node ");
-                    Serial.print(position[0]);
-                    Serial.print(" with agr. ");
-                    Serial.println(behavior);
+                    // Serial.print("  Picking direction out of node ");
+                    // Serial.print(position[0]);
+                    // Serial.print(" with agr. ");
+                    // Serial.println(behavior);
+                     ESP_LOGD(TAG,"Picking direction out of node %i with agr. %i", position[0],behavior);
 #endif
 
                     int newDirection = -1;
@@ -120,14 +125,16 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
                                 {
                                     // We can't go straight ahead - we need to take a more aggressive angle
 #ifdef DEBUG_ADVANCEMENT
-                                    Serial.println("  Can't go straight - picking more agr. path");
+                                    // Serial.println("  Can't go straight - picking more agr. path");
+                                    ESP_LOGD(TAG,"Can't go straight - picking more agr. path");
 #endif
                                     anger++;
                                 }
                                 else
                                 {
 #ifdef DEBUG_ADVANCEMENT
-                                    Serial.println("  Going forward");
+                                    // Serial.println("  Going forward");
+                                     ESP_LOGD(TAG, "Going forward");
 #endif
                                     newDirection = forward;
                                 }
@@ -141,28 +148,28 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
                                 if (leftConnection >= 0 && rightConnection >= 0)
                                 {
 #ifdef DEBUG_ADVANCEMENT
-                                    Serial.println("  Turning left or right at random");
+                                ESP_LOGD(TAG,"  Turning left or right at random");
 #endif
                                     newDirection = random(2) ? wideLeft : wideRight;
                                 }
                                 else if (leftConnection >= 0)
                                 {
 #ifdef DEBUG_ADVANCEMENT
-                                    Serial.println("  Can only turn left");
+                                     ESP_LOGD(TAG,"  Can only turn left");
 #endif
                                     newDirection = wideLeft;
                                 }
                                 else if (rightConnection >= 0)
                                 {
 #ifdef DEBUG_ADVANCEMENT
-                                    Serial.println("  Can only turn right");
+                                     ESP_LOGD(TAG," Can only turn right");
 #endif
                                     newDirection = wideRight;
                                 }
                                 else
                                 {
 #ifdef DEBUG_ADVANCEMENT
-                                    Serial.println("  Can't make wide turn - picking more agr. path");
+                                    ESP_LOGD(TAG, "  Can't make wide turn - picking more agr. path");
 #endif
                                     anger++; // Can't take shallow turn - must become more aggressive
                                 }
@@ -176,28 +183,28 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
                                 if (leftConnection >= 0 && rightConnection >= 0)
                                 {
 #ifdef DEBUG_ADVANCEMENT
-                                    Serial.println("  Turning left or right at random");
+                                    ESP_LOGD(TAG, "  Turning left or right at random");
 #endif
                                     newDirection = random(2) ? sharpLeft : sharpRight;
                                 }
                                 else if (leftConnection >= 0)
                                 {
 #ifdef DEBUG_ADVANCEMENT
-                                    Serial.println("  Can only turn left");
+                                    ESP_LOGD(TAG, "  Can only turn left");
 #endif
                                     newDirection = sharpLeft;
                                 }
                                 else if (rightConnection >= 0)
                                 {
 #ifdef DEBUG_ADVANCEMENT
-                                    Serial.println("  Can only turn right");
+                                    ESP_LOGD(TAG, "  Can only turn right");
 #endif
                                     newDirection = sharpRight;
                                 }
                                 else
                                 {
 #ifdef DEBUG_ADVANCEMENT
-                                    Serial.println("  Can't make tight turn - picking less agr. path");
+                                    ESP_LOGD(TAG, "  Can't make tight turn - picking less agr. path");
 #endif
                                     anger--; // Can't take tight turn - must become less aggressive
                                 }
@@ -222,7 +229,7 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
                         }
 
 #ifdef DEBUG_ADVANCEMENT
-                        Serial.println("  Turning as rightward as possible");
+                        ESP_LOGD(TAG, "  Turning as rightward as possible");
 #endif
                     }
                     else if (behavior == alwaysTurnsLeft)
@@ -239,15 +246,16 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
                         }
 
 #ifdef DEBUG_ADVANCEMENT
-                        Serial.println("  Turning as leftward as possible");
+                        ESP_LOGD(TAG, "  Turning as leftward as possible");
 #endif
                     }
 
 #ifdef DEBUG_ADVANCEMENT
-                    Serial.print("  Leaving node ");
-                    Serial.print(position[0]);
-                    Serial.print(" in direction ");
-                    Serial.println(newDirection);
+                    // Serial.print("  Leaving node ");
+                    // Serial.print(position[0]);
+                    // Serial.print(" in direction ");
+                    // Serial.println(newDirection);
+                     ESP_LOGD(TAG,"  Leaving node %i in direction %i", position[0], newDirection);
 #endif
 
                     position[1] = newDirection;
@@ -256,14 +264,15 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
                 position[0] = nodeConnections[position[0]][position[1]]; // Look up which segment we're on
 
 #ifdef DEBUG_ADVANCEMENT
-                Serial.print("  and entering segment ");
-                Serial.println(position[0]);
+                // Serial.print("  and entering segment ");
+                // Serial.println(position[0]);
+                ESP_LOGD(TAG,"and entering segment %i", position[0]);
 #endif
 
                 if (position[1] == 5 || position[1] == 0 || position[1] == 1)
                 { // Top half of the node
 #ifdef DEBUG_ADVANCEMENT
-                    Serial.println("  (starting at bottom)");
+                    ESP_LOGD(TAG,"  (starting at bottom)");
 #endif
                     state = travelingUpwards;
                     position[1] = 0; // Starting at bottom of segment
@@ -271,7 +280,7 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
                 else
                 {
 #ifdef DEBUG_ADVANCEMENT
-                    Serial.println("  (starting at top)");
+                    ESP_LOGD(TAG, "  (starting at top)");
 #endif
                     state = travelingDownwards;
                     position[1] = 13; // Starting at top of 14-LED-long strip
@@ -287,8 +296,8 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
                 {
                     // We've reached the top!
 #ifdef DEBUG_ADVANCEMENT
-                    Serial.print("  Reached top of seg. ");
-                    Serial.println(position[0]);
+                    ESP_LOGD(TAG, "  Reached top of seg. %i", position[0]);
+                    // Serial.println(position[0]);
 #endif
                     // Enter the new node.
                     int segment = position[0];
@@ -302,20 +311,20 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
                             position[1] = i;
                     }
 #ifdef DEBUG_ADVANCEMENT
-                    Serial.print("  Entering node ");
-                    Serial.print(position[0]);
-                    Serial.print(" from direction ");
-                    Serial.println(position[1]);
+                    ESP_LOGD(TAG, "  Entering node %i from direction $i", position[0], position[1]);
+                    // Serial.print(position[0]);
+                    // Serial.print(" from direction ");
+                    // Serial.println(position[1]);
 #endif
                     state = withinNode;
                 }
                 else
                 {
 #ifdef DEBUG_ADVANCEMENT
-                    Serial.print("  Moved up to seg. ");
-                    Serial.print(position[0]);
-                    Serial.print(" LED ");
-                    Serial.println(position[1]);
+                    ESP_LOGD(TAG, "  Moved up to seg. %i LED %i", position[0], position[1]);
+                    // Serial.print(position[0]);
+                    // Serial.print(" LED ");
+                    // Serial.println(position[1]);
 #endif
                 }
                 break;
@@ -328,8 +337,8 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
                 {
                     // We've reached the bottom!
 #ifdef DEBUG_ADVANCEMENT
-                    Serial.print("  Reached bottom of seg. ");
-                    Serial.println(position[0]);
+                    ESP_LOGD(TAG, "  Reached bottom of seg. %i", position[0]);
+                    // Serial.println(position[0]);
 #endif
                     // Enter the new node.
                     int segment = position[0];
@@ -343,20 +352,14 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
                             position[1] = i;
                     }
 #ifdef DEBUG_ADVANCEMENT
-                    Serial.print("  Entering node ");
-                    Serial.print(position[0]);
-                    Serial.print(" from direction ");
-                    Serial.println(position[1]);
+                    ESP_LOGD(TAG, "  Entering node %i from direction %i", position[0], position[1]);
 #endif
                     state = withinNode;
                 }
                 else
                 {
 #ifdef DEBUG_ADVANCEMENT
-                    Serial.print("  Moved down to seg. ");
-                    Serial.print(position[0]);
-                    Serial.print(" LED ");
-                    Serial.println(position[1]);
+                    ESP_LOGD(TAG, "  Moved down to seg. %i LED %i", position[0], position[1]);
 #endif
                 }
                 break;
@@ -376,17 +379,14 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
         }
 
 #ifdef DEBUG_ADVANCEMENT
-        Serial.print("  Age is now ");
-        Serial.print(age);
-        Serial.print('/');
-        Serial.println(lifespan);
+        ESP_LOGD(TAG, "  Age is now %i/%i", age, lifespan);
 #endif
 
         if (lifespan && age >= lifespan)
         {
             // We dead
 #ifdef DEBUG_ADVANCEMENT
-            Serial.println("  Lifespan is up! Ripple is dead.");
+            ESP_LOGD(TAG, "  Lifespan is up! Ripple is dead.");
 #endif
             state = dead;
             position[0] = position[1] = pressure = age = 0;
@@ -407,22 +407,24 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
         ledColors[position[0]][position[1]][2] = uint8_t(min(255, max(0, int(fmap(float(age), 0.0, float(lifespan), color & 0xFF, 0.0)) + blue)));
 
 #ifdef DEBUG_RENDERING
-        Serial.print("Rendering ripple position (");
-        Serial.print(position[0]);
-        Serial.print(',');
-        Serial.print(position[1]);
-        Serial.print(") at Strip ");
-        Serial.print(strip);
-        Serial.print(", LED ");
-        Serial.print(led);
-        Serial.print(", color 0x");
-        for (int i = 0; i < 3; i++)
-        {
-            if (ledColors[position[0]][position[1]][i] <= 0x0F)
-                Serial.print('0');
-            Serial.print(ledColors[position[0]][position[1]][i], HEX);
-        }
-        Serial.println();
+        ESP_LOGD(TAG, "Rendering ripple position %i at strip %i LED %i color r%u g%u b%u", position[1], strip, led), ledColors[position[0]][position[1]][0], ledColors[position[0]][position[1]][1], ledColors[position[0]][position[1]][2];
+        ESP_LOGD(TAG, "Color: %X %X %X %X", color, ledColors[position[0]][position[1]][0], ledColors[position[0]][position[1]][1], ledColors[position[0]][position[1]][2]);
+        // Serial.print("Rendering ripple position (");
+        // Serial.print(Rendering ripple position);
+        // Serial.print(',');
+        // Serial.print(position[1]);
+        // Serial.print(") at Strip ");
+        // Serial.print(strip);
+        // Serial.print(", LED ");
+        // Serial.print(led);
+        // Serial.print(", color 0x");
+        // for (int i = 0; i < 3; i++)
+        // {
+        //     if (ledColors[position[0]][position[1]][i] <= 0x0F)
+        //         Serial.print('0');
+        //     Serial.print(ledColors[position[0]][position[1]][i], HEX);
+        // }
+        // Serial.println();
 #endif
 
 };
