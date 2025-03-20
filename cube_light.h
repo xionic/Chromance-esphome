@@ -12,6 +12,7 @@
 #define STRIP_2_LENGTH 322
 #define PIN_1 4
 #define PIN_2 13
+#define TARGET_FPS 5
 
 //Power Limiting
 //#define POWER_PER_LED_COLOR 20 //60mA for each ws2812B, /3 for each of the colors on a die

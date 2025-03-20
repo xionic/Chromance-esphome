@@ -13,8 +13,8 @@
 #include "esphome/core/log.h"
 #include <Arduino.h>
 
-#define DEBUG_ADVANCEMENT
-#define DEBUG_RENDERING
+// #define DEBUG_ADVANCEMENT
+// #define DEBUG_RENDERING
 
 using namespace std;
 static const char *const TAG = "CubeLightOutput.light";
@@ -37,7 +37,9 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
     // Place the Ripple in a node
     void Ripple::start(uint8_t n, uint8_t d, unsigned long c, float s, unsigned long l, uint8_t b)
     {
+#ifdef DEBUG_ADVANCEMENT
         ESP_LOGD(TAG, "Ripple start node/seg: %i dir/pos: %i color: %X", n, d, c);
+#endif
         color = c;
         speed = s;
         lifespan = l;
@@ -62,7 +64,7 @@ float fmap(float x, float in_min, float in_max, float out_min, float out_max)
 
     void Ripple::advance(uint8_t ledColors[40][14][3])
     {
-        ESP_LOGD(TAG, "Advance");
+        // ESP_LOGD(TAG, "Advance");
         unsigned long age = millis() - birthday;
 
         if (state == dead)

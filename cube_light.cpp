@@ -78,11 +78,11 @@ void CubeLightOutput::setup()
     
      //init color arrays
     for (int i = 0; i < STRIP_1_LENGTH; i++){
-        leds[0][i] = CRGB::Blue;
+        leds[0][i] = CRGB::Black;
     }
     for (int i = 0; i < STRIP_2_LENGTH; i++)
     {
-        leds[1][i] = CRGB::Blue;
+        leds[1][i] = CRGB::Black;
     }
     for (int segment = 0; segment < 40; segment++)  
     {       
@@ -98,10 +98,11 @@ void CubeLightOutput::setup()
 }
 
 unsigned long lastLoopTime = 0;
+
 void CubeLightOutput::loop()
 {
-    //limit loop run frequency for testing to prevent esphome crapping itself with log messages
-    if (millis() - lastLoopTime < 1000 ){
+    //limit loop run frequency to FPS to allow stable effects and let ESPHome do it's thing
+    if (millis() - lastLoopTime < 1000/TARGET_FPS ){
         return;
     }
     unsigned long lastLoopTime = millis();
@@ -144,7 +145,7 @@ void CubeLightOutput::loop()
                 }
     }
 
-    ESP_LOGD(TAG, "FastLED show");
+    // ESP_LOGD(TAG, "FastLED show");
     FastLED.show();
 
     if (millis() - lastHeartbeat >= AUTO_PULSE_TIMEOUT)    {
@@ -152,15 +153,14 @@ void CubeLightOutput::loop()
         // When biometric data is unavailable, visualize at random
         if (numberOfAutoPulseTypes && millis() - lastRandomPulse >= RANDOM_PULSE_TIME)
         {
-            ESP_LOGD(TAG, "Firing random pulse");
+            // ESP_LOGD(TAG, "Firing random pulse");
             unsigned int baseColor = random(0xFFFF);
-            ESP_LOGD(TAG, "Random Color/Hue: %X", baseColor);
 
            
 
             if (currentAutoPulseType == 255 || (numberOfAutoPulseTypes > 1 && millis() - lastAutoPulseChange >= AUTO_PULSE_CHANGE_TIME))
             {
-                ESP_LOGD(TAG, "AUTO_PULSE_CHANGE_TIME");
+                // ESP_LOGD(TAG, "AUTO_PULSE_CHANGE_TIME");
                 byte possiblePulse = 255;
                 while (true)
                 {
@@ -203,7 +203,7 @@ void CubeLightOutput::loop()
             {
             case 0:
             {
-                ESP_LOGD(TAG, "Case 0");
+                // ESP_LOGD(TAG, "Case 0");
                 int node = 0;
                 bool foundStartingNode = false;
                 while (!foundStartingNode)
@@ -220,7 +220,7 @@ void CubeLightOutput::loop()
                     if (node == lastAutoPulseNode)
                         foundStartingNode = false;
                 }
-                ESP_LOGD(TAG, "Selected Node %i", node);
+                // ESP_LOGD(TAG, "Selected Node %i", node);
                 lastAutoPulseNode = node;
 
                 for (int i = 0; i < 6; i++)
@@ -250,14 +250,13 @@ void CubeLightOutput::loop()
                             }
                         }
                     }
-                }
-                ESP_LOGD(TAG, "POst For");
+                }                
                 break;
             }
 
             case 1:
             {
-                ESP_LOGD(TAG, "Case 1");
+                // ESP_LOGD(TAG, "Case 1");
                 int node = cubeNodes[random(numberOfCubeNodes)];
 
                 while (node == lastAutoPulseNode)
@@ -298,7 +297,7 @@ void CubeLightOutput::loop()
 
             case 2:
             {
-                ESP_LOGD(TAG, "Case 2");
+                // ESP_LOGD(TAG, "Case 2");
                 byte behavior = random(2) ? alwaysTurnsLeft : alwaysTurnsRight;
 
                 lastAutoPulseNode = starburstNode;
@@ -398,7 +397,7 @@ void CubeLightOutput::loop()
         }
 
     }
-    
+    //ESP_LOGD(TAG, "Benchmark: %i", millis() - benchmark);
     //  Serial.print("Benchmark: ");
     //  Serial.println(millis() - benchmark);
 }
