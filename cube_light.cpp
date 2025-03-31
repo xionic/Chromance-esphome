@@ -8,8 +8,6 @@
 namespace esphome {
 namespace cube_light {
 
-static const char *const TAG = "CubeLightOutput.light";
-
 // These ripples are endlessly reused so we don't need to do any memory management
 #define numberOfRipples 30
 Ripple ripples[numberOfRipples] = {
@@ -46,23 +44,24 @@ Ripple ripples[numberOfRipples] = {
 };
 
 
-CubeLightOutput::CubeLightOutput(){}
-
-light::LightTraits CubeLightOutput::get_traits()
+CubeLight::CubeLight(){}
+/*
+light::LightTraits CubeLight::get_traits()
 {
     auto traits = light::LightTraits();
     traits.set_supported_color_modes({light::ColorMode::BRIGHTNESS});
     return traits;
 }
 
-void CubeLightOutput::write_state(light::LightState *state) {}
+void CubeLight::write_state(light::LightState *state) {}
+*/
+void CubeLight::dump_config()
+{
 
-void CubeLightOutput::dump_config() {
-
-    ESP_LOGCONFIG(TAG, "CubeLightOutput config");
+    ESP_LOGCONFIG(TAG, "CubeLight config");
 }
 
-void CubeLightOutput::setup()
+void CubeLight::setup()
 {
     leds[0] = new CRGB[STRIP_1_LENGTH];
     leds[1] = new CRGB[STRIP_2_LENGTH];
@@ -77,14 +76,8 @@ void CubeLightOutput::setup()
     lastHeartbeat = millis();
     
      //init color arrays
-    for (int i = 0; i < STRIP_1_LENGTH; i++){
-        leds[0][i] = CRGB::Black;
-    }
-    for (int i = 0; i < STRIP_2_LENGTH; i++)
-    {
-        leds[1][i] = CRGB::Black;
-    }
-    for (int segment = 0; segment < 40; segment++)  
+    set_to_black();
+    for (int segment = 0; segment < 40; segment++)
     {       
         for (int fromBottom = 0; fromBottom < 14; fromBottom++)
         {
@@ -99,15 +92,26 @@ void CubeLightOutput::setup()
 
 unsigned long lastLoopTime = 0;
 
-void CubeLightOutput::loop()
+void CubeLight::loop()
 {
-    //limit loop run frequency to FPS to allow stable effects and let ESPHome do it's thing
-    if (millis() - lastLoopTime < 1000/TARGET_FPS ){
+    // limit loop run frequency to FPS to allow stable effects and let ESPHome do it's thing
+    if (millis() - lastLoopTime < 1000 / TARGET_FPS)
+    {
         return;
     }
     unsigned long lastLoopTime = millis();
 
-    unsigned long benchmark = millis();
+#ifdef REMOTE_JSON_MODE
+    FastLED.show();
+#else
+    if (!is_on || (!randomPulsesEnabled && !cubePulsesEnabled && !starburstPulsesEnabled))
+    {
+        set_to_black();
+        FastLED.show();
+        return;
+    }
+
+        unsigned long benchmark = millis();
 
     // Fade all dots to create trails
     for (int strip = 0; strip < 40; strip++)
@@ -145,7 +149,6 @@ void CubeLightOutput::loop()
                 }
     }
 
-    // ESP_LOGD(TAG, "FastLED show");
     FastLED.show();
 
     if (millis() - lastHeartbeat >= AUTO_PULSE_TIMEOUT)    {
@@ -153,36 +156,34 @@ void CubeLightOutput::loop()
         // When biometric data is unavailable, visualize at random
         if (numberOfAutoPulseTypes && millis() - lastRandomPulse >= RANDOM_PULSE_TIME)
         {
-            // ESP_LOGD(TAG, "Firing random pulse");
             unsigned int baseColor = random(0xFFFF);
 
            
-
+            ESP_LOGD(TAG, "loop1");
             if (currentAutoPulseType == 255 || (numberOfAutoPulseTypes > 1 && millis() - lastAutoPulseChange >= AUTO_PULSE_CHANGE_TIME))
             {
-                // ESP_LOGD(TAG, "AUTO_PULSE_CHANGE_TIME");
                 byte possiblePulse = 255;
                 while (true)
                 {
                     possiblePulse = random(3);
-
-                    if (possiblePulse == currentAutoPulseType)
-                        continue;
+                    //ESP_LOGD(TAG, "%i", possiblePulse);
+                    /*if (possiblePulse == currentAutoPulseType)
+                        continue;*/
 
                     switch (possiblePulse)
                     {
                     case 0:
-                        if (!RANDOM_PULSES_ENABLED)
+                        if (!randomPulsesEnabled)
                             continue;
                         break;
 
                     case 1:
-                        if (!CUBE_PULSES_ENABLED)
+                        if (!cubePulsesEnabled)
                             continue;
                         break;
 
                     case 2:
-                        if (!STARBURST_PULSES_ENABLED)
+                        if (!starburstPulsesEnabled)
                             continue;
                         break;
 
@@ -194,10 +195,11 @@ void CubeLightOutput::loop()
                     lastAutoPulseChange = millis();
                     break;
                 }
+                ESP_LOGD(TAG, "picked pulse type %i", currentAutoPulseType);
             }
 
-            //testing - force type
-            currentAutoPulseType = 0;
+            // testing - force type
+            // currentAutoPulseType = 0;
 
              switch (currentAutoPulseType)
             {
@@ -220,7 +222,7 @@ void CubeLightOutput::loop()
                     if (node == lastAutoPulseNode)
                         foundStartingNode = false;
                 }
-                // ESP_LOGD(TAG, "Selected Node %i", node);
+                 ESP_LOGD(TAG, "Selected Node %i", node);
                 lastAutoPulseNode = node;
 
                 for (int i = 0; i < 6; i++)
@@ -232,18 +234,14 @@ void CubeLightOutput::loop()
                         {
                             if (ripples[j].state == dead)
                             {
-                                CHSV hsv = CHSV(baseColor, 255, 255);
-                                CRGB rgb;
-                                hsv2rgb_spectrum(hsv, rgb);
                                 ripples[j]
                                     .start(
                                         node,
                                         i,
-                                        //                      strip0.ColorHSV(baseColor + (0xFFFF / 6) * i, 255, 255),
-                                        // strip0.ColorHSV(baseColor, 255, 255),
-                                        CRGBToInt(rgb),
+                                        hueToColor(baseColor),
+                                        // (float(random(100)) / 100.0) * .1 + .5, //speed
                                         float(random(100)) / 100.0 * .2 + .5,
-                                        3000,
+                                        3000, // lifespan
                                         1);
 
                                 break;
@@ -274,15 +272,10 @@ void CubeLightOutput::loop()
                         {
                             if (ripples[j].state == dead)
                             {
-                                CHSV hsv = CHSV(baseColor, 255, 255);
-                                CRGB rgb;
-                                hsv2rgb_spectrum(hsv, rgb);
                                 ripples[j].start(
                                     node,
                                     i,
-                                    //                      strip0.ColorHSV(baseColor + (0xFFFF / 6) * i, 255, 255),
-                                    // strip0.ColorHSV(baseColor, 255, 255),
-                                    CRGBToInt(rgb),
+                                    hueToColor(baseColor),
                                     .5,
                                     2000,
                                     behavior);
@@ -308,14 +301,10 @@ void CubeLightOutput::loop()
                     {
                         if (ripples[j].state == dead)
                         {
-                            CHSV hsv = CHSV(baseColor, 255, 255);
-                            CRGB rgb;
-                            hsv2rgb_spectrum(hsv, rgb);
                             ripples[j].start(
                                 starburstNode,
                                 i,
-                                // strip0.ColorHSV(baseColor + (0xFFFF / 6) * i, 255, 255),
-                                CRGBToInt(rgb),
+                                hueToColor(baseColor),
                                 .65,
                                 1500,
                                 behavior);
@@ -400,11 +389,45 @@ void CubeLightOutput::loop()
     //ESP_LOGD(TAG, "Benchmark: %i", millis() - benchmark);
     //  Serial.print("Benchmark: ");
     //  Serial.println(millis() - benchmark);
+#endif
 }
 
-uint32_t CubeLightOutput::CRGBToInt(CRGB crgb)
+void CubeLight::set_to_black()
 {
-    return (crgb.r << 16) | (crgb.g <<8) | crgb.b;
+    for (int i = 0; i < STRIP_1_LENGTH; i++)
+    {
+        leds[0][i] = CRGB::Black;
+    }
+    for (int i = 0; i < STRIP_2_LENGTH; i++)
+    {
+        leds[1][i] = CRGB::Black;
+    }
+}
+
+// void CubeLightOutput::receive_data(ArduinoJson::JsonObject data)
+// {
+//     ESP_LOGD(TAG, "%i", data["str1"][0]);
+//     /*
+//         for (int i = 0; i < STRIP_1_LENGTH; i++)
+//         {
+//             leds[0][i].r = data["str1"][i][0];
+//             leds[0][i].g = data["str1"][i][1];
+//             leds[0][i].b = data["str1"][i][2];
+//         }
+//         for (int i = 0; i < STRIP_2_LENGTH; i++)
+//         {
+//             leds[0][i].r = data["str2"][i][0];
+//             leds[0][i].g = data["str2"][i][1];
+//             leds[0][i].b = data["str2"][i][2];
+//         }*/
+// }
+
+    uint32_t hueToColor(unsigned int hue)
+{
+    CHSV hsv = CHSV(hue, 255, MAX_BRIGHTNESS);
+    CRGB rgb;
+    hsv2rgb_spectrum(hsv, rgb);
+    return (rgb.r << 16) | (rgb.g << 8) | rgb.b;
 }
 
 } // namespace cube_light

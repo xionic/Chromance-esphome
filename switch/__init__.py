@@ -1,12 +1,14 @@
 import esphome.codegen as cg
-from esphome.components import number
+from esphome.components import switch
 import esphome.config_validation as cv
-  
+from esphome.const import (
+    DEVICE_CLASS_SWITCH,
+)   
 from .. import CubeLight, cube_light_ns, CUBE_LIGHT_ID
 
-FeatureSwitch = cube_light_ns.class_("CubeLightNumber", number.Number)
+FeatureSwitch = cube_light_ns.class_("FeatureSwitch", switch.Switch)
 
-CONF_NUMBER_speed = "pattern_random"
+CONF_PATTERN_RANDOM = "pattern_random"
 CONF_PATTERN_CUBE = "pattern_cube"
 CONF_PATTERN_STARBURST = "pattern_starburst"
 
